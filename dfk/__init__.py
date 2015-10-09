@@ -113,10 +113,16 @@ def repoint(from_model, rel_name, to_model, clean_caches=True, **kwargs):
         clean_object_caches(from_model, to_model)
 
 
-def clean_object_caches(*models):
+def clean_object_caches(from_model, to_model):
     # Repopulate related object caches when a point or repoint is done, as
     # relationships will have changed. Without this, things like filtering
     # on related objects is likely to fail.
-    for model in models:
-        model._meta._fill_related_objects_cache()
-        model._meta.init_name_map()
+
+    # Django 1.8+ meta API
+    if getattr(from_model._meta, '_fill_related_objects_cache', None) is None:
+        from_model._meta._expire_cache(forward=True, reverse=False)
+        to_model._meta._expire_cache(forward=False, reverse=True)
+    else:
+        for model in (from_model, to_model):
+            model._meta._fill_related_objects_cache()
+            model._meta.init_name_map()

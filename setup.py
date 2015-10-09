@@ -15,7 +15,7 @@ setup(
     packages=find_packages(exclude=['ez_setup']),
     zip_safe=False,
     install_requires=[
-        'django>=1.3,<1.8'
+        'django>=1.3,<1.9'
     ],
     classifiers=[
         "Programming Language :: Python",

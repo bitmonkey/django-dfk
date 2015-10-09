@@ -42,6 +42,15 @@ class AbstractModel(models.Model):
     class Meta:
         abstract = True
 
+def get_all_related_objects_with_model(model):
+    if getattr(model._meta,'_fill_related_objects_cache', None) is None:
+         return [
+             (f, f.model if f.model != model else None)
+             for f in model._meta.get_fields()
+             if (f.one_to_many or f.one_to_one) and f.auto_created
+         ] 
+    return model._meta.get_all_related_objects_with_model()
+
 # Repoint ModelB's foreign key field 'fk' to ModelC
 repoint(ModelB, 'fk', ModelC)
 
@@ -134,7 +143,7 @@ class DeferredForeignKeyTestCase(TestCase):
             c = DeferredForeignKey()
 
         point(NewModel, 'c', ModelC)
-        mdc_related = ModelC._meta.get_all_related_objects_with_model()
+        mdc_related = get_all_related_objects_with_model(ModelC)
         found = False
         for rel, _ in mdc_related:
             if rel.model is NewModel:
@@ -148,7 +157,7 @@ class DeferredForeignKeyTestCase(TestCase):
             c = DeferredForeignKey()
 
         point(NewModelNoCache, 'c', ModelC, clean_caches=False)
-        mdc_related = ModelC._meta.get_all_related_objects_with_model()
+        mdc_related = get_all_related_objects_with_model(ModelC)
         found = False
         for rel, _ in mdc_related:
             if rel.model is NewModelNoCache:
@@ -162,7 +171,7 @@ class DeferredForeignKeyTestCase(TestCase):
             c = DeferredForeignKey()
 
         point(NewModelNoCache2, 'c', ModelC, clean_caches=False)
-        mdc_related = ModelC._meta.get_all_related_objects_with_model()
+        mdc_related = get_all_related_objects_with_model(ModelC)
         found = False
         for rel, _ in mdc_related:
             if rel.model is NewModelNoCache2:
@@ -170,7 +179,7 @@ class DeferredForeignKeyTestCase(TestCase):
         assert not found
 
         clean_object_caches(NewModelNoCache2, ModelC)
-        mdc_related = ModelC._meta.get_all_related_objects_with_model()
+        mdc_related = get_all_related_objects_with_model(ModelC)
         for rel, _ in mdc_related:
             if rel.model is NewModelNoCache2:
                 found = True
@@ -184,7 +193,7 @@ class DeferredForeignKeyTestCase(TestCase):
 
         point(NewModel2, 'c', ModelA)
         repoint(NewModel2, 'c', ModelC)
-        mdc_related = ModelC._meta.get_all_related_objects_with_model()
+        mdc_related = get_all_related_objects_with_model(ModelC)
         found = False
         for rel, _ in mdc_related:
             if rel.model is NewModel2:
@@ -199,7 +208,7 @@ class DeferredForeignKeyTestCase(TestCase):
 
         point(NewModel2NoCache, 'c', ModelA)
         repoint(NewModel2NoCache, 'c', ModelC, clean_caches=False)
-        mdc_related = ModelC._meta.get_all_related_objects_with_model()
+        mdc_related = get_all_related_objects_with_model(ModelC)
         found = False
         for rel, _ in mdc_related:
             if rel.model is NewModel2NoCache:
